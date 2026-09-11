@@ -1,0 +1,17 @@
+{
+  "name": "super-data-dashboard",
+  "version": "1.0.0",
+  "description": "Simple dashboard for visualizing progress from Redmine issue data",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/zhou-3beer/Super-Data-Dashboard"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

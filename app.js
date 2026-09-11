@@ -1,0 +1,219 @@
+const samplePayload = {
+  issues: [
+    {
+      id: 101,
+      subject: "認証まわりのUI確認",
+      done_ratio: 100,
+      status: { name: "完了" },
+      assigned_to: { name: "Aki" },
+      project: { name: "管理画面" },
+      due_date: "2026-09-09"
+    },
+    {
+      id: 102,
+      subject: "売上グラフの最終調整",
+      done_ratio: 80,
+      status: { name: "進行中" },
+      assigned_to: { name: "Mina" },
+      project: { name: "ダッシュボード" },
+      due_date: "2026-09-14"
+    },
+    {
+      id: 103,
+      subject: "CSV 出力のレイアウト修正",
+      done_ratio: 45,
+      status: { name: "レビュー待ち" },
+      assigned_to: { name: "Ren" },
+      project: { name: "帳票" },
+      due_date: "2026-09-16"
+    },
+    {
+      id: 104,
+      subject: "月次KPI API 連携",
+      done_ratio: 20,
+      status: { name: "新規" },
+      assigned_to: { name: "Yui" },
+      project: { name: "分析基盤" },
+      due_date: "2026-09-20"
+    }
+  ]
+};
+
+const bucketDefinitions = [
+  { key: "notStarted", label: "0%〜24%", min: 0, max: 24 },
+  { key: "early", label: "25%〜49%", min: 25, max: 49 },
+  { key: "steady", label: "50%〜74%", min: 50, max: 74 },
+  { key: "almostDone", label: "75%〜99%", min: 75, max: 99 },
+  { key: "done", label: "100%", min: 100, max: 100 }
+];
+
+function clampRatio(value) {
+  const ratio = Number.isFinite(Number(value)) ? Number(value) : 0;
+  return Math.min(100, Math.max(0, ratio));
+}
+
+function issueCollectionFrom(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value && Array.isArray(value.issues)) {
+    return value.issues;
+  }
+
+  throw new Error("`issues` 配列を含む Redmine JSON を入力してください。");
+}
+
+function formatPerson(value) {
+  return value?.name || "未設定";
+}
+
+function formatProject(value) {
+  return value?.name || "プロジェクト未設定";
+}
+
+export function parseRedmineData(text) {
+  const parsed = JSON.parse(text);
+
+  return issueCollectionFrom(parsed).map((issue, index) => ({
+    id: issue.id ?? index + 1,
+    subject: issue.subject || `チケット ${index + 1}`,
+    projectName: formatProject(issue.project),
+    assigneeName: formatPerson(issue.assigned_to),
+    statusName: issue.status?.name || "未設定",
+    dueDate: issue.due_date || "未設定",
+    doneRatio: clampRatio(issue.done_ratio)
+  }));
+}
+
+export function buildProgressBuckets(issues) {
+  const total = issues.length || 1;
+
+  return bucketDefinitions.map((bucket) => {
+    const count = issues.filter(
+      (issue) => issue.doneRatio >= bucket.min && issue.doneRatio <= bucket.max
+    ).length;
+
+    return {
+      ...bucket,
+      count,
+      percentage: Math.round((count / total) * 100)
+    };
+  });
+}
+
+export function summarizeIssues(issues) {
+  const total = issues.length;
+  const totalDoneRatio = issues.reduce((sum, issue) => sum + issue.doneRatio, 0);
+  const completedCount = issues.filter((issue) => issue.doneRatio === 100).length;
+  const inProgressCount = issues.filter(
+    (issue) => issue.doneRatio >= 25 && issue.doneRatio < 100
+  ).length;
+  const attentionCount = issues.filter((issue) => issue.doneRatio < 50).length;
+
+  return {
+    total,
+    overallProgress: total ? Math.round(totalDoneRatio / total) : 0,
+    completedCount,
+    inProgressCount,
+    attentionCount,
+    buckets: buildProgressBuckets(issues)
+  };
+}
+
+function renderBucketList(container, buckets) {
+  container.innerHTML = buckets
+    .map(
+      (bucket) => `
+        <section class="bucket-card">
+          <div class="bucket-header">
+            <strong>${bucket.label}</strong>
+            <span>${bucket.count} 件</span>
+          </div>
+          <div class="mini-progress-track" aria-hidden="true">
+            <div class="mini-progress-fill" style="width: ${bucket.percentage}%"></div>
+          </div>
+        </section>
+      `
+    )
+    .join("");
+}
+
+function renderIssueTable(body, issues) {
+  const sortedIssues = [...issues].sort((left, right) => left.doneRatio - right.doneRatio);
+
+  body.innerHTML = sortedIssues
+    .map(
+      (issue) => `
+        <tr>
+          <td>
+            <span class="ticket-title">${issue.subject}</span>
+            <span class="ticket-meta">#${issue.id} / ${issue.projectName}</span>
+          </td>
+          <td>${issue.assigneeName}</td>
+          <td><span class="badge">${issue.statusName}</span></td>
+          <td>
+            <div class="progress-cell">
+              <span>${issue.doneRatio}%</span>
+            </div>
+            <div class="mini-progress-track" aria-hidden="true">
+              <div class="mini-progress-fill" style="width: ${issue.doneRatio}%"></div>
+            </div>
+          </td>
+          <td>${issue.dueDate}</td>
+        </tr>
+      `
+    )
+    .join("");
+}
+
+function setText(id, value) {
+  document.getElementById(id).textContent = value;
+}
+
+function renderDashboard(issues) {
+  const summary = summarizeIssues(issues);
+  const overallProgressBar = document.getElementById("overallProgressBar");
+
+  setText("overallProgressValue", `${summary.overallProgress}%`);
+  setText("completedValue", String(summary.completedCount));
+  setText("completedDetail", `${summary.total} 件中`);
+  setText("inProgressValue", String(summary.inProgressCount));
+  setText("attentionValue", String(summary.attentionCount));
+  setText("issueCount", `${summary.total} 件`);
+  overallProgressBar.style.width = `${summary.overallProgress}%`;
+
+  renderBucketList(document.getElementById("bucketList"), summary.buckets);
+  renderIssueTable(document.getElementById("issueTableBody"), issues);
+}
+
+function attachDashboard() {
+  const dataInput = document.getElementById("dataInput");
+  const renderButton = document.getElementById("renderButton");
+  const sampleButton = document.getElementById("sampleButton");
+  const errorMessage = document.getElementById("errorMessage");
+
+  const updateDashboard = () => {
+    try {
+      const issues = parseRedmineData(dataInput.value);
+      errorMessage.textContent = "";
+      renderDashboard(issues);
+    } catch (error) {
+      errorMessage.textContent =
+        error instanceof Error ? error.message : "JSON を読み込めませんでした。";
+    }
+  };
+
+  dataInput.value = JSON.stringify(samplePayload, null, 2);
+  renderButton.addEventListener("click", updateDashboard);
+  sampleButton.addEventListener("click", () => {
+    dataInput.value = JSON.stringify(samplePayload, null, 2);
+    updateDashboard();
+  });
+
+  updateDashboard();
+}
+
+if (typeof document !== "undefined") {
+  attachDashboard();
+}
