@@ -46,6 +46,22 @@ test("parseRedmineData accepts Redmine issue responses", () => {
   ]);
 });
 
+test("parseRedmineData also accepts a direct issue array", () => {
+  const issues = parseRedmineData(
+    JSON.stringify([
+      {
+        id: 21,
+        subject: "直接配列の確認",
+        done_ratio: 60
+      }
+    ])
+  );
+
+  assert.equal(issues[0].id, 21);
+  assert.equal(issues[0].subject, "直接配列の確認");
+  assert.equal(issues[0].doneRatio, 60);
+});
+
 test("summarizeIssues returns overall progress counts", () => {
   const issues = [
     { doneRatio: 100 },

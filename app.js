@@ -122,49 +122,79 @@ export function summarizeIssues(issues) {
 }
 
 function renderBucketList(container, buckets) {
-  container.innerHTML = buckets
-    .map(
-      (bucket) => `
-        <section class="bucket-card">
-          <div class="bucket-header">
-            <strong>${bucket.label}</strong>
-            <span>${bucket.count} 件</span>
-          </div>
-          <div class="mini-progress-track" aria-hidden="true">
-            <div class="mini-progress-fill" style="width: ${bucket.percentage}%"></div>
-          </div>
-        </section>
-      `
-    )
-    .join("");
+  container.replaceChildren(
+    ...buckets.map((bucket) => {
+      const card = document.createElement("section");
+      const header = document.createElement("div");
+      const title = document.createElement("strong");
+      const count = document.createElement("span");
+      const track = document.createElement("div");
+      const fill = document.createElement("div");
+
+      card.className = "bucket-card";
+      header.className = "bucket-header";
+      track.className = "mini-progress-track";
+      fill.className = "mini-progress-fill";
+      track.setAttribute("aria-hidden", "true");
+
+      title.textContent = bucket.label;
+      count.textContent = `${bucket.count} 件`;
+      fill.style.width = `${bucket.percentage}%`;
+
+      header.append(title, count);
+      track.append(fill);
+      card.append(header, track);
+
+      return card;
+    })
+  );
 }
 
 function renderIssueTable(body, issues) {
   const sortedIssues = [...issues].sort((left, right) => left.doneRatio - right.doneRatio);
 
-  body.innerHTML = sortedIssues
-    .map(
-      (issue) => `
-        <tr>
-          <td>
-            <span class="ticket-title">${issue.subject}</span>
-            <span class="ticket-meta">#${issue.id} / ${issue.projectName}</span>
-          </td>
-          <td>${issue.assigneeName}</td>
-          <td><span class="badge">${issue.statusName}</span></td>
-          <td>
-            <div class="progress-cell">
-              <span>${issue.doneRatio}%</span>
-            </div>
-            <div class="mini-progress-track" aria-hidden="true">
-              <div class="mini-progress-fill" style="width: ${issue.doneRatio}%"></div>
-            </div>
-          </td>
-          <td>${issue.dueDate}</td>
-        </tr>
-      `
-    )
-    .join("");
+  body.replaceChildren(
+    ...sortedIssues.map((issue) => {
+      const row = document.createElement("tr");
+      const ticketCell = document.createElement("td");
+      const assigneeCell = document.createElement("td");
+      const statusCell = document.createElement("td");
+      const progressCell = document.createElement("td");
+      const dueDateCell = document.createElement("td");
+      const title = document.createElement("span");
+      const meta = document.createElement("span");
+      const badge = document.createElement("span");
+      const progressHeader = document.createElement("div");
+      const progressValue = document.createElement("span");
+      const progressTrack = document.createElement("div");
+      const progressFill = document.createElement("div");
+
+      title.className = "ticket-title";
+      meta.className = "ticket-meta";
+      badge.className = "badge";
+      progressHeader.className = "progress-cell";
+      progressTrack.className = "mini-progress-track";
+      progressFill.className = "mini-progress-fill";
+      progressTrack.setAttribute("aria-hidden", "true");
+
+      title.textContent = issue.subject;
+      meta.textContent = `#${issue.id} / ${issue.projectName}`;
+      assigneeCell.textContent = issue.assigneeName;
+      badge.textContent = issue.statusName;
+      progressValue.textContent = `${issue.doneRatio}%`;
+      progressFill.style.width = `${issue.doneRatio}%`;
+      dueDateCell.textContent = issue.dueDate;
+
+      ticketCell.append(title, meta);
+      statusCell.append(badge);
+      progressHeader.append(progressValue);
+      progressTrack.append(progressFill);
+      progressCell.append(progressHeader, progressTrack);
+      row.append(ticketCell, assigneeCell, statusCell, progressCell, dueDateCell);
+
+      return row;
+    })
+  );
 }
 
 function setText(id, value) {
