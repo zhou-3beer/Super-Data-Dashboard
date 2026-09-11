@@ -85,7 +85,12 @@ export function parseRedmineData(text) {
     throw error;
   }
 
-  return issueCollectionFrom(parsed).map((issue, index) => ({
+  return issueCollectionFrom(parsed).map((issue, index) => {
+    if (!issue || typeof issue !== "object" || Array.isArray(issue)) {
+      throw new Error("issues 配列の各要素はチケットオブジェクトである必要があります。");
+    }
+
+    return {
     id: issue.id ?? index + 1,
     subject: issue.subject || `チケット ${index + 1}`,
     projectName: formatProject(issue.project),
@@ -93,7 +98,8 @@ export function parseRedmineData(text) {
     statusName: issue.status?.name || "未設定",
     dueDate: issue.due_date || "未設定",
     doneRatio: clampRatio(issue.done_ratio)
-  }));
+    };
+  });
 }
 
 export function buildProgressBuckets(issues) {
@@ -236,6 +242,21 @@ function renderDashboard(issues) {
   renderIssueTable(document.getElementById("issueTableBody"), issues);
 }
 
+function clearDashboard() {
+  const overallProgressBar = document.getElementById("overallProgressBar");
+
+  setText("overallProgressValue", "0%");
+  setText("completedValue", "0");
+  setText("completedDetail", "0 件中");
+  setText("inProgressValue", "0");
+  setText("attentionValue", "0");
+  setText("issueCount", "0 件");
+  overallProgressBar.style.width = "0%";
+
+  renderBucketList(document.getElementById("bucketList"), buildProgressBuckets([]));
+  renderIssueTable(document.getElementById("issueTableBody"), []);
+}
+
 function attachDashboard() {
   const dataInput = document.getElementById("dataInput");
   const renderButton = document.getElementById("renderButton");
@@ -248,6 +269,7 @@ function attachDashboard() {
       errorMessage.textContent = "";
       renderDashboard(issues);
     } catch (error) {
+      clearDashboard();
       errorMessage.textContent =
         error instanceof Error
           ? error.message

@@ -101,6 +101,13 @@ test("parseRedmineData rejects unsupported payloads", () => {
   );
 });
 
+test("parseRedmineData rejects non-object issue entries", () => {
+  assert.throws(
+    () => parseRedmineData(JSON.stringify({ issues: [null] })),
+    /各要素はチケットオブジェクト/
+  );
+});
+
 test("parseRedmineData shows a friendly message for malformed JSON", () => {
   assert.throws(
     () => parseRedmineData("{"),
