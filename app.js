@@ -73,7 +73,17 @@ function formatProject(value) {
 }
 
 export function parseRedmineData(text) {
-  const parsed = JSON.parse(text);
+  let parsed;
+
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("JSON の形式が正しくありません。Redmine の issues JSON をそのまま貼り付けてください。");
+    }
+
+    throw error;
+  }
 
   return issueCollectionFrom(parsed).map((issue, index) => ({
     id: issue.id ?? index + 1,
@@ -87,19 +97,28 @@ export function parseRedmineData(text) {
 }
 
 export function buildProgressBuckets(issues) {
-  const total = issues.length || 1;
+  const total = issues.length;
+  const buckets = bucketDefinitions.map((bucket) => ({ ...bucket, count: 0, percentage: 0 }));
 
-  return bucketDefinitions.map((bucket) => {
-    const count = issues.filter(
-      (issue) => issue.doneRatio >= bucket.min && issue.doneRatio <= bucket.max
-    ).length;
+  for (const issue of issues) {
+    const bucketIndex =
+      issue.doneRatio === 100
+        ? 4
+        : issue.doneRatio >= 75
+          ? 3
+          : issue.doneRatio >= 50
+            ? 2
+            : issue.doneRatio >= 25
+              ? 1
+              : 0;
 
-    return {
-      ...bucket,
-      count,
-      percentage: Math.round((count / total) * 100)
-    };
-  });
+    buckets[bucketIndex].count += 1;
+  }
+
+  return buckets.map((bucket) => ({
+    ...bucket,
+    percentage: total ? Math.round((bucket.count / total) * 100) : 0
+  }));
 }
 
 export function summarizeIssues(issues) {
@@ -230,7 +249,9 @@ function attachDashboard() {
       renderDashboard(issues);
     } catch (error) {
       errorMessage.textContent =
-        error instanceof Error ? error.message : "JSON を読み込めませんでした。";
+        error instanceof Error
+          ? error.message
+          : "JSON を読み込めませんでした。Redmine の issues JSON を確認してください。";
     }
   };
 

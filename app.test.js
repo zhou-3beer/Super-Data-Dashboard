@@ -86,3 +86,10 @@ test("parseRedmineData rejects unsupported payloads", () => {
     /issues/
   );
 });
+
+test("parseRedmineData shows a friendly message for malformed JSON", () => {
+  assert.throws(
+    () => parseRedmineData("{"),
+    /JSON の形式が正しくありません/
+  );
+});
