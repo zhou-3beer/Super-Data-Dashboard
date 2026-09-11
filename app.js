@@ -39,6 +39,8 @@ const samplePayload = {
   ]
 };
 
+const samplePayloadText = JSON.stringify(samplePayload, null, 2);
+
 const bucketDefinitions = [
   { key: "notStarted", label: "0%〜24%", min: 0, max: 24 },
   { key: "early", label: "25%〜49%", min: 25, max: 49 },
@@ -285,10 +287,10 @@ function attachDashboard() {
     }
   };
 
-  dataInput.value = JSON.stringify(samplePayload, null, 2);
+  dataInput.value = samplePayloadText;
   renderButton.addEventListener("click", updateDashboard);
   sampleButton.addEventListener("click", () => {
-    dataInput.value = JSON.stringify(samplePayload, null, 2);
+    dataInput.value = samplePayloadText;
     updateDashboard();
   });
 
