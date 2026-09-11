@@ -108,6 +108,13 @@ test("parseRedmineData rejects non-object issue entries", () => {
   );
 });
 
+test("parseRedmineData rejects non-object entries in direct arrays too", () => {
+  assert.throws(
+    () => parseRedmineData(JSON.stringify([null])),
+    /各要素はチケットオブジェクト/
+  );
+});
+
 test("parseRedmineData shows a friendly message for malformed JSON", () => {
   assert.throws(
     () => parseRedmineData("{"),

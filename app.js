@@ -52,6 +52,14 @@ function clampRatio(value) {
   return Math.min(100, Math.max(0, ratio));
 }
 
+function textOrFallback(value, fallback) {
+  return typeof value === "string" ? value : fallback;
+}
+
+function primitiveIdOrFallback(value, fallback) {
+  return typeof value === "string" || typeof value === "number" ? value : fallback;
+}
+
 function issueCollectionFrom(value) {
   if (Array.isArray(value)) {
     return value;
@@ -65,11 +73,11 @@ function issueCollectionFrom(value) {
 }
 
 function formatPerson(value) {
-  return value?.name || "未設定";
+  return textOrFallback(value?.name, "未設定");
 }
 
 function formatProject(value) {
-  return value?.name || "プロジェクト未設定";
+  return textOrFallback(value?.name, "プロジェクト未設定");
 }
 
 export function parseRedmineData(text) {
@@ -91,13 +99,13 @@ export function parseRedmineData(text) {
     }
 
     return {
-    id: issue.id ?? index + 1,
-    subject: issue.subject || `チケット ${index + 1}`,
-    projectName: formatProject(issue.project),
-    assigneeName: formatPerson(issue.assigned_to),
-    statusName: issue.status?.name || "未設定",
-    dueDate: issue.due_date || "未設定",
-    doneRatio: clampRatio(issue.done_ratio)
+      id: primitiveIdOrFallback(issue.id, index + 1),
+      subject: textOrFallback(issue.subject, `チケット ${index + 1}`),
+      projectName: formatProject(issue.project),
+      assigneeName: formatPerson(issue.assigned_to),
+      statusName: textOrFallback(issue.status?.name, "未設定"),
+      dueDate: textOrFallback(issue.due_date, "未設定"),
+      doneRatio: clampRatio(issue.done_ratio)
     };
   });
 }
