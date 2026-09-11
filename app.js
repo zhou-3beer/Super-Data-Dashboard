@@ -126,7 +126,7 @@ export function summarizeIssues(issues) {
   const totalDoneRatio = issues.reduce((sum, issue) => sum + issue.doneRatio, 0);
   const completedCount = issues.filter((issue) => issue.doneRatio === 100).length;
   const inProgressCount = issues.filter(
-    (issue) => issue.doneRatio >= 25 && issue.doneRatio < 100
+    (issue) => issue.doneRatio >= 50 && issue.doneRatio < 100
   ).length;
   const attentionCount = issues.filter((issue) => issue.doneRatio < 50).length;
 

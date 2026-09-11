@@ -74,10 +74,24 @@ test("summarizeIssues returns overall progress counts", () => {
     total: 4,
     overallProgress: 61,
     completedCount: 1,
-    inProgressCount: 2,
+    inProgressCount: 1,
     attentionCount: 2,
     buckets: buildProgressBuckets(issues)
   });
+});
+
+test("summarizeIssues keeps summary ranges consistent at boundaries", () => {
+  const summary = summarizeIssues([
+    { doneRatio: 25 },
+    { doneRatio: 49 },
+    { doneRatio: 50 },
+    { doneRatio: 99 },
+    { doneRatio: 100 }
+  ]);
+
+  assert.equal(summary.inProgressCount, 2);
+  assert.equal(summary.attentionCount, 2);
+  assert.equal(summary.completedCount, 1);
 });
 
 test("parseRedmineData rejects unsupported payloads", () => {
