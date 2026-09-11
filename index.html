@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Super Data Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Super Data Dashboard</p>
+          <h1>Redmine の進捗率を見やすくするダッシュボード</h1>
+          <p class="description">
+            Redmine の issues API から取得した JSON を貼り付けると、全体進捗・完了数・遅れ気味のチケットを見やすく確認できます。
+          </p>
+        </div>
+        <div class="hero-card">
+          <h2>使い方</h2>
+          <ol>
+            <li>Redmine の issues API レスポンス JSON をコピー</li>
+            <li>下の入力欄へ貼り付け</li>
+            <li>「進捗を更新」を押す</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Redmine データ入力</h2>
+          <div class="actions">
+            <button id="sampleButton" type="button" class="secondary">サンプルを表示</button>
+            <button id="renderButton" type="button">進捗を更新</button>
+          </div>
+        </div>
+        <label class="sr-only" for="dataInput">Redmine JSON</label>
+        <textarea id="dataInput" rows="16" spellcheck="false"></textarea>
+        <p id="errorMessage" class="error-message" role="alert"></p>
+      </section>
+
+      <section class="summary-grid" aria-label="進捗サマリー">
+        <article class="summary-card accent">
+          <span class="summary-label">全体進捗</span>
+          <strong id="overallProgressValue" class="summary-value">0%</strong>
+          <div class="progress-track" aria-hidden="true">
+            <div id="overallProgressBar" class="progress-fill"></div>
+          </div>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">完了チケット</span>
+          <strong id="completedValue" class="summary-value">0</strong>
+          <span id="completedDetail" class="summary-detail">0 件中</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">進行中</span>
+          <strong id="inProgressValue" class="summary-value">0</strong>
+          <span class="summary-detail">50%〜99%</span>
+        </article>
+        <article class="summary-card warning">
+          <span class="summary-label">要確認</span>
+          <strong id="attentionValue" class="summary-value">0</strong>
+          <span class="summary-detail">50% 未満</span>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>進捗分布</h2>
+          </div>
+          <div id="bucketList" class="bucket-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>チケット一覧</h2>
+            <span id="issueCount" class="muted">0 件</span>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <caption class="table-caption">Redmine チケットごとの担当者・ステータス・進捗率・期限の一覧</caption>
+              <thead>
+                <tr>
+                  <th>チケット</th>
+                  <th>担当</th>
+                  <th>ステータス</th>
+                  <th>進捗率</th>
+                  <th>期限</th>
+                </tr>
+              </thead>
+              <tbody id="issueTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
