@@ -117,18 +117,13 @@ export function buildProgressBuckets(issues) {
   const buckets = bucketDefinitions.map((bucket) => ({ ...bucket, count: 0, percentage: 0 }));
 
   for (const issue of issues) {
-    const bucketIndex =
-      issue.doneRatio === 100
-        ? 4
-        : issue.doneRatio >= 75
-          ? 3
-          : issue.doneRatio >= 50
-            ? 2
-            : issue.doneRatio >= 25
-              ? 1
-              : 0;
+    const bucketIndex = bucketDefinitions.findIndex(
+      (bucket) => issue.doneRatio >= bucket.min && issue.doneRatio <= bucket.max
+    );
 
-    buckets[bucketIndex].count += 1;
+    if (bucketIndex >= 0) {
+      buckets[bucketIndex].count += 1;
+    }
   }
 
   return buckets.map((bucket) => ({
